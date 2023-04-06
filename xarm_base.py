@@ -1,10 +1,10 @@
 
 from xarm.wrapper import XArmAPI
-# from binghao_calib.cali_desktop import Recorder
 import numpy as np
 import gym
 from gym import spaces
 import pyrealsense2 as rs
+import time
 
 action_dtype = np.float16
 
@@ -40,8 +40,8 @@ class Base(gym.Env):
         config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
         self.profile = self.pipeline.start(config)
 
-        self.movement_scale = np.array([50, 50, 50, 20, 20, 20])
-        self.gripper_scale = 100
+        self.movement_scale = np.array([50, 50, 50, 60, 60, 60])
+        self.gripper_scale = 200
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(7,), dtype=action_dtype)
         # ----------------------------
         # should be defined in wrapper
@@ -62,7 +62,9 @@ class Base(gym.Env):
 
     def reset(self):
         set_position(self._arm, self.initial_pos, "reset")
-        alert_user(self._arm.set_gripper_position(self.initial_gripper, timeout=1, wait=True), "reset gripper")
+        alert_user(self._arm.set_gripper_position(0, timeout=3, wait=True), "reset gripper")
+        alert_user(self._arm.set_gripper_position(self.initial_gripper, timeout=3, wait=True), "reset gripper")
+        time.sleep(1)
         return self._get_obs()
 
     def _get_obs(self):
@@ -74,7 +76,8 @@ class Base(gym.Env):
         pc = rs.pointcloud()
         pc.map_to(color_frame)
         cloud = pc.calculate(depth_frame)
-        return color_frame, cloud, self.last_pos, self.gripper_pos
+        image = np.asanyarray(color_frame.get_data())
+        return image, cloud, self.last_pos, self.gripper_pos
 
     def get_reward(self, obs):
         raise NotImplementedError
@@ -87,7 +90,8 @@ class Base(gym.Env):
         next_pos = np.clip(self.movement_scale * action[:-1] + np.array(self.last_pos), self.pos_lbound, self.pos_hbound)
         gripper_pos = np.clip(self.gripper_scale * action[-1] + self.gripper_pos[1], self.gripper_lbound, self.gripper_hbound)
         set_position(self._arm, next_pos, "set arm pos")
-        alert_user(self._arm.set_gripper_position(gripper_pos, timeout=1, wait=True), "set gripper pos")
+        if action[-1] > 0.001:
+            alert_user(self._arm.set_gripper_position(gripper_pos, timeout=3, wait=True), "set gripper pos")
         obs = self._get_obs()
         reward = self.get_reward(obs)
         done = False
@@ -149,5 +153,5 @@ class XYZGMovement(Base):
     def step(self, action):
         assert action.shape == (4,)
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
-        full_action = np.concatenate([action[:-1], self.action_padding, action[-1]])
+        full_action = np.concatenate([action[:-1], self.action_padding, action[-1:]])
         return super().step(full_action)
