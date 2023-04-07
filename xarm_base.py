@@ -46,7 +46,7 @@ class Base(gym.Env):
         # ----------------------------
         # should be defined in wrapper
         self.observation_space = None
-        self.initial_pos = None # [201.5, 0, 140.5, -180, 0, 0]
+        self.initial_pos = None
         self.pos_hbound = None
         self.pos_lbound = None
         # ----------------------------
