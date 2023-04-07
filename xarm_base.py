@@ -89,9 +89,9 @@ class Base(gym.Env):
         assert action.shape == (7,)
         next_pos = np.clip(self.movement_scale * action[:-1] + np.array(self.last_pos), self.pos_lbound, self.pos_hbound)
         gripper_pos = np.clip(self.gripper_scale * action[-1] + self.gripper_pos[1], self.gripper_lbound, self.gripper_hbound)
-        set_position(self._arm, next_pos, "set arm pos")
+        set_position(self._arm, next_pos, "step arm pos")
         if action[-1] > 0.001:
-            alert_user(self._arm.set_gripper_position(gripper_pos, timeout=3, wait=True), "set gripper pos")
+            alert_user(self._arm.set_gripper_position(gripper_pos, timeout=3, wait=True), "step gripper pos")
         obs = self._get_obs()
         reward = self.get_reward(obs)
         done = False
@@ -99,6 +99,16 @@ class Base(gym.Env):
         info = {'is_success': success, 'success': success}
         return obs, reward, done, info
     
+    def move(self, movement):
+        assert movement.shape == (7,)
+        next_pos = np.clip(movement[:-1] + np.array(self.last_pos), self.pos_lbound, self.pos_hbound)
+        gripper_pos = np.clip(movement[-1] + self.gripper_pos[1], self.gripper_lbound, self.gripper_hbound)
+        set_position(self._arm, next_pos, "move arm pos")
+        if movement[-1] > 0.1:
+            alert_user(self._arm.set_gripper_position(gripper_pos, timeout=3, wait=True), "move gripper pos")
+        obs = self._get_obs()
+        return obs
+
     @property
     def position(self):
         return self._arm.position
@@ -121,12 +131,18 @@ class XYMovement(Base):
         super().__init__(IP)
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(2,), dtype=action_dtype)
         self.action_padding = np.array([0, 0, 0, 0, 0], dtype=action_dtype)
+        self.movement_padding = np.array([0, 0, 0, 0, 0], dtype=action_dtype)
 
     def step(self, action):
         assert action.shape == (2,)
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
         full_action = np.concatenate([action, self.action_padding])
         return super().step(full_action)
+    
+    def move(self, movement):
+        assert movement.shape == (2,)
+        full_movement = np.concatenate([movement, self.movement_padding])
+        return super().step(full_movement)
 
 class XYZMovement(Base):
     # only movement on XYZ is allowed
@@ -135,12 +151,18 @@ class XYZMovement(Base):
         super().__init__(IP)
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(3,), dtype=action_dtype)
         self.action_padding = np.array([0, 0, 0, 0], dtype=action_dtype)
+        self.movement_padding = np.array([0, 0, 0, 0], dtype=action_dtype)
 
     def step(self, action):
         assert action.shape == (3,)
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
         full_action = np.concatenate([action, self.action_padding])
         return super().step(full_action)
+    
+    def move(self, movement):
+        assert movement.shape == (3,)
+        full_movement = np.concatenate([movement, self.movement_padding])
+        return super().step(full_movement)
 
 class XYZGMovement(Base):
     # only movement on XYZ and gripper is allowed
@@ -149,9 +171,15 @@ class XYZGMovement(Base):
         super().__init__(IP)
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(4,), dtype=action_dtype)
         self.action_padding = np.array([0, 0, 0], dtype=action_dtype)
+        self.movement_padding = np.array([0, 0, 0], dtype=action_dtype)
 
     def step(self, action):
         assert action.shape == (4,)
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
         full_action = np.concatenate([action[:-1], self.action_padding, action[-1:]])
         return super().step(full_action)
+
+    def move(self, movement):
+        assert movement.shape == (4,)
+        full_movement = np.concatenate([movement[:-1], self.movement_padding, movement[-1:]])
+        return super().step(full_movement)

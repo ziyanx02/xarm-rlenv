@@ -5,6 +5,7 @@ import numpy as np
 import gym
 import cv2
 from gym.utils import seeding
+import random
 from transformers import ViTImageProcessor, ViTModel
 
 xarm_IP = '192.168.1.209'
@@ -21,14 +22,22 @@ class Reach(base.XYMovement):
               "gripper_lbound": 0
 		}
         self.init(xarm_cfg)
+        self.target_pos = np.array([206, 0, 20, -180, 0, 0])
 
     def get_reward(self, obs):
         image, pointcloud, position, gripper_pos = obs
-        return 0
+        success = self.is_success(obs)
+        return 100 if success else 0
 
     def is_success(self, obs):
         image, pointcloud, position, gripper_pos = obs
-        return False
+        distance = np.sum((position - self.target_pos) ** 2)
+        return distance < 2500
+    
+    def reset(self):
+        super().reset()
+        random_movement = np.array([random.randint(-50, 50), random.randint(-100, 100)])
+        return self.move(random_movement)
 
 class Lift(base.XYZGMovement):
     def __init__(self, IP):
