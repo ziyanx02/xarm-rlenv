@@ -138,6 +138,10 @@ class Base(gym.Env):
     def gripper_position(self):
         return np.array(self._arm.get_gripper_position()[-1:])
     
+    @property
+    def state(self):
+        return np.concatenate([self.position, self.gripper_position])
+    
     def get_frame(self):
         # return rgb and depth frame
         frames = self.pipeline.wait_for_frames()

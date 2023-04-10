@@ -1,8 +1,8 @@
-import xarm_env
+import xarm_rlenv
 import numpy as np
 import cv2
 
-env = xarm_env.make("lift", obs_mode="visual", use_ViT=False)
+env = xarm_rlenv.make("lift", obs_mode="visual", use_ViT=False)
 obs = env.reset()
 cv2.imwrite("initial.jpg", obs)
 obs, _, _, _ = env.step(np.array([1.0, 0, 0, 0], dtype=np.float16))
