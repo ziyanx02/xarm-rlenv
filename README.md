@@ -30,8 +30,8 @@ Not implemented yet
 ```
 ```
 def reset(self):
-Calling function reset of superclass will reset the xarm to the initial position defined in xarm_cfg. 
-Random initialization can be implemented by calling self.move(movement) which directly changes the position of xarm.
+Calling function reset() of superclass will reset the xarm to the initial position defined in xarm_cfg. 
+Random initialization should be implemented here by calling self.move(movement).
 ```
 ### Action
 Action is specified by ```task```:
