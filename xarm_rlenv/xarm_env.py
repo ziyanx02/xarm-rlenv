@@ -24,6 +24,13 @@ class Reach(base.XYMovement):
         reward = 100 if success and not self.succeeded else 0
         self.succeeded = self.succeeded or success
         return reward
+    
+    def get_info(self, obs):
+        success = self.is_success(obs)
+        return {"success": success, "is_success": success}
+    
+    def get_done(self, obs):
+        return False
 
     def is_success(self, obs):
         image, pointcloud, position, gripper_pos = obs
@@ -51,6 +58,13 @@ class Lift(base.XYZGMovement):
     def get_reward(self, obs):
         image, pointcloud, position, gripper_pos = obs
         return 0
+    
+    def get_info(self, obs):
+        success = self.is_success(obs)
+        return {"success": success, "is_success": success}
+    
+    def get_done(self, obs):
+        return False
 
     def is_success(self, obs):
         image, pointcloud, position, gripper_pos = obs
@@ -73,10 +87,14 @@ class Base(base.Base):
         image, pointcloud, position, gripper_pos = obs
         return 0
 
-    def is_success(self, obs):
+    def get_info(self, obs):
+        image, pointcloud, position, gripper_pos = obs
+        return None
+    
+    def get_done(self, obs):
         image, pointcloud, position, gripper_pos = obs
         return False
-    
+   
     def reset(self):
         super().reset()
         random_movement = np.array([

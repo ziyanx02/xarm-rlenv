@@ -86,6 +86,12 @@ class Base(gym.Env):
     def get_reward(self, obs):
         raise NotImplementedError
     
+    def get_info(self, obs):
+        raise NotImplementedError
+    
+    def get_done(self, obs):
+        raise NotImplementedError
+
     def is_success(self, obs):
         raise NotImplementedError
     
@@ -115,9 +121,8 @@ class Base(gym.Env):
             alert_user(self._arm.set_gripper_position(gripper_pos, timeout=6, wait=True), "step gripper pos")
         obs = self._get_obs()
         reward = self.get_reward(obs)
-        done = False
-        success = self.is_success(obs)
-        info = {'is_success': success, 'success': success}
+        done = self.get_done(obs)
+        info = self.get_info(obs)
         return obs, reward, done, info
     
     def move(self, movement):
