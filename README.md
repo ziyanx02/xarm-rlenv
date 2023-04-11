@@ -12,7 +12,7 @@ Initialize environment by:
 import xarm_rlenv
 env = xarm_rlenv.make(task[, obs_mode, use_ViT, image_size, IP, seed])
 ```
-```task``` can be defined in ```xarm_env.py``` (should be added to \_\_init__.py) by defining following attributes:
+```task``` can be defined in xarm_env.py (should be added to \_\_init__.py) by defining following attributes:
 ```
 xarm_cfg: safety boundary for movement and initial position after reset
 ```
@@ -22,11 +22,11 @@ Define reward function using observation including image, pointcloud, state
 ```
 ```
 def get_done(self, obs):
-Not implemented yet
+Return whether the environment is done.
 ```
 ```
 def get_info(self, obs):
-Not implemented yet
+Return the info got from this step.
 ```
 ```
 def reset(self):
